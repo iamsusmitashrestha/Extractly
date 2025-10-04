@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exractly - Extract Data</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <h1>Exractly</h1>
+                <p>Natural Language Data Extraction</p>
+            </div>
+        </div>
+
+        <!-- Current URL Display -->
+        <div class="url-display">
+            <div class="url-label">Current Page:</div>
+            <div class="url-text" id="currentUrl">Loading...</div>
+        </div>
+
+        <!-- Instruction Input -->
+        <div class="input-section">
+            <label for="instructionInput" class="input-label">
+                What data would you like to extract?
+            </label>
+            <textarea 
+                id="instructionInput" 
+                class="instruction-input" 
+                placeholder="e.g., Get the title, price, and rating from this product page"
+                rows="3"
+            ></textarea>
+            
+            <!-- Example suggestions -->
+            <div class="suggestions">
+                <div class="suggestions-label">Quick examples:</div>
+                <div class="suggestion-buttons">
+                    <button class="suggestion-btn" data-text="Get the title, price, and description">Product Info</button>
+                    <button class="suggestion-btn" data-text="Extract all contact information">Contact Details</button>
+                    <button class="suggestion-btn" data-text="Get description">Description</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-section">
+            <button id="extractBtn" class="extract-btn">
+                <span class="btn-text">Extract Data</span>
+                <span class="btn-loader" style="display: none;">⏳</span>
+            </button>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="results-section" style="display: none;">
+            <div class="results-header">
+                <h3>📊 Extraction Results</h3>
+                <button id="copyResultsBtn" class="copy-btn">📋 Copy</button>
+            </div>
+            <div id="resultsContent" class="results-content"></div>
+        </div>
+
+        <!-- Error Section -->
+        <div id="errorSection" class="error-section" style="display: none;">
+            <div class="error-header"> Error</div>
+            <div id="errorContent" class="error-content"></div>
+        </div>
+
+        <!-- Status Section -->
+        <div class="status-section">
+            <div id="statusText" class="status-text">Ready to extract data</div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-links">
+                <a href="#" id="historyLink">History</a>
+                <a href="#" id="settingsLink">⚙️ Settings</a>
+                <a href="#" id="helpLink">❓ Help</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

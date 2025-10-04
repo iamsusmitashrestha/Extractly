@@ -1,0 +1,26 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: exractly-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: exractly
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      # Persistent data volume
+      - pgdata:/var/lib/postgresql/data
+      # Auto-init: run all .sql files on first startup
+      - ./database:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d exractly"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
