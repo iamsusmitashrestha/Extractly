@@ -3,10 +3,10 @@ version: '3.9'
 services:
   postgres:
     image: postgres:16
-    container_name: exractly-postgres
+    container_name: Extractly-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: exractly
+      POSTGRES_DB: Extractly
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -17,7 +17,7 @@ services:
       # Auto-init: run all .sql files on first startup
       - ./database:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d exractly"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d Extractly"]
       interval: 5s
       timeout: 5s
       retries: 10

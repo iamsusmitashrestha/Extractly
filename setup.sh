@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Exractly Setup Script
-echo "Setting up Exractly - Natural Language Web Data Extraction"
+# Extractly Setup Script
+echo "Setting up Extractly - Natural Language Web Data Extraction"
 echo "============================================================"
 
 # Check if Docker is running

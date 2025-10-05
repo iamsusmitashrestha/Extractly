@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Exractly - Natural Language Web Data Extraction",
+  "name": "Extractly - Natural Language Web Data Extraction",
   "version": "1.0.0",
   "description": "Extract structured data from web pages using natural language instructions",
   "permissions": [
@@ -15,7 +15,7 @@
   ],
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "Exractly - Extract Data"
+    "default_title": "Extractly - Extract Data"
     
   },
   "background": {

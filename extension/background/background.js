@@ -1,11 +1,11 @@
-// Background service worker for Exractly Chrome Extension
+// Background service worker for Extractly Chrome Extension
 
 // Import logger utility
 importScripts('../utils/logger.js');
 
 // Extension installation handler
 chrome.runtime.onInstalled.addListener((details) => {
-    logger.info('Exractly extension installed:', details.reason);
+    logger.info('Extractly extension installed:', details.reason);
     
     if (details.reason === 'install') {
         // Set default settings
@@ -189,7 +189,7 @@ chrome.action.onClicked.addListener((tab) => {
 
 // Cleanup on extension shutdown
 chrome.runtime.onSuspend.addListener(() => {
-    logger.info('Exractly extension suspending...');
+    logger.info('Extractly extension suspending...');
 });
 
-logger.info('Exractly background service worker loaded');
+logger.info('Extractly background service worker loaded');

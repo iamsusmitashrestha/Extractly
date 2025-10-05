@@ -1,4 +1,4 @@
-// Content script for Exractly Chrome Extension
+// Content script for Extractly Chrome Extension
 // This script runs in the context of web pages
 
 (function() {
@@ -13,12 +13,12 @@
     };
 
     // Prevent multiple injections
-    if (window.exractlyContentScript) {
+    if (window.ExtractlyContentScript) {
         return;
     }
-    window.exractlyContentScript = true;
+    window.ExtractlyContentScript = true;
 
-    logger.info('Exractly content script loaded on:', window.location.href);
+    logger.info('Extractly content script loaded on:', window.location.href);
 
     // Listen for messages from popup or background script
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -78,7 +78,7 @@
                 try {
                     const elements = document.querySelectorAll(selector);
                     elements.forEach(element => {
-                        element.classList.add('exractly-highlight');
+                        element.classList.add('Extractly-highlight');
                         element.style.outline = '2px solid #667eea';
                         element.style.backgroundColor = 'rgba(102, 126, 234, 0.1)';
                     });
@@ -232,9 +232,9 @@
 
     // Helper function to clean highlights
     function cleanHighlights() {
-        const highlighted = document.querySelectorAll('.exractly-highlight');
+        const highlighted = document.querySelectorAll('.Extractly-highlight');
         highlighted.forEach(element => {
-            element.classList.remove('exractly-highlight');
+            element.classList.remove('Extractly-highlight');
             element.style.outline = '';
             element.style.backgroundColor = '';
         });

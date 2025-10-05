@@ -1,4 +1,4 @@
-// Exractly Records Browser JavaScript
+// Extractly Records Browser JavaScript
 
 class RecordsBrowser {
     constructor() {

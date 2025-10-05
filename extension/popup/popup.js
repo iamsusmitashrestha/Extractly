@@ -1,4 +1,4 @@
-// Popup JavaScript for Exractly Chrome Extension
+// Popup JavaScript for Extractly Chrome Extension
 
 // Simple logger for popup
 const logger = {
@@ -8,7 +8,7 @@ const logger = {
     debug: (message, ...args) => console.debug(`[DEBUG] ${new Date().toISOString()} - ${message}`, ...args)
 };
 
-class ExractlyPopup {
+class ExtractlyPopup {
     constructor() {
         this.apiBaseUrl = 'http://localhost:3000/api';
         this.currentTab = null;
@@ -237,7 +237,7 @@ class ExractlyPopup {
 
         const { parsed_fields, extracted, confidence } = this.lastResults;
         
-        let text = 'Exractly Extraction Results\n';
+        let text = 'Extractly Extraction Results\n';
         text += '=' .repeat(30) + '\n\n';
         
         parsed_fields.forEach(field => {
@@ -323,5 +323,5 @@ class ExractlyPopup {
 
 // Initialize popup when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new ExractlyPopup();
+    new ExtractlyPopup();
 });

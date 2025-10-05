@@ -63,7 +63,7 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    service: 'exractly-backend'
+    service: 'Extractly-backend'
   });
 });
 
@@ -89,7 +89,7 @@ app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
-  logger.info(`Exractly Backend Server running on port ${PORT}`);
+  logger.info(`Extractly Backend Server running on port ${PORT}`);
   logger.info(`Health check: http://localhost:${PORT}/health`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });

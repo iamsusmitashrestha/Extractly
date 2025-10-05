@@ -7,5 +7,5 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- Log the initialization
 DO $$
 BEGIN
-    RAISE NOTICE 'Exractly database initialized with pgcrypto extension';
+    RAISE NOTICE 'Extractly database initialized with pgcrypto extension';
 END $$;

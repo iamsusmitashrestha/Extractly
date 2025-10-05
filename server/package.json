@@ -1,7 +1,7 @@
 {
-  "name": "exractly-backend",
+  "name": "Extractly-backend",
   "version": "1.0.0",
-  "description": "Backend service for Exractly Chrome Extension - Natural language web data extraction",
+  "description": "Backend service for Extractly Chrome Extension - Natural language web data extraction",
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon src/index.ts",

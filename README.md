@@ -1,4 +1,4 @@
-# Exractly - Natural Language Web Data Extraction
+# Extractly - Natural Language Web Data Extraction
 
 A powerful Chrome Extension that uses AI to extract structured data from web pages using natural language instructions.
 
@@ -77,13 +77,13 @@ The backend will be running at `http://localhost:3000`
 2. Enable "Developer mode" (toggle in top right)
 3. Click "Load unpacked"
 4. Select the `/extension` folder from this project
-5. The Exractly extension should now appear in your extensions
+5. The Extractly extension should now appear in your extensions
 
 ### 4. Usage
 
 #### Chrome Extension
 1. Navigate to any webpage
-2. Click the Exractly extension icon
+2. Click the Extractly extension icon
 3. Enter a natural language instruction (e.g., "Get the title, price, and rating")
 4. Click "Extract Data"
 5. View the structured results with confidence scores
@@ -98,7 +98,7 @@ The backend will be running at `http://localhost:3000`
 ## Project Structure
 
 ```
-exractly/
+Extractly/
 ├── server/                  # Node.js + Express + TypeScript
 │   ├── prisma/
 │   │   ├── schema.prisma   # Database schema
@@ -215,7 +215,7 @@ npx prisma studio
 
 1. Make changes to extension files
 2. Go to `chrome://extensions/`
-3. Click the refresh icon on the Exractly extension
+3. Click the refresh icon on the Extractly extension
 4. Test your changes
 
 ## Environment Variables
@@ -224,7 +224,7 @@ Create a `.env` file in the backend directory:
 
 ```env
 # Database
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/exractly?schema=public"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/Extractly?schema=public"
 
 # Gemini AI
 GEMINI_API_KEY="your_gemini_api_key_here"

@@ -1,4 +1,4 @@
-# **Exractly Project - IMPLEMENTATION COMPLETE!**
+# **Extractly Project - IMPLEMENTATION COMPLETE!**
 
 ## **Project Status: READY FOR USE**
 
@@ -29,7 +29,7 @@ Your Full Stack Chrome Extension for Natural Language Web Data Extraction has be
 ## **Project Structure Created**
 
 ```
-exractly/
+Extractly/
 ├── server/                  # Node.js + Express + TypeScript
 │   ├── prisma/             # Database schema & migrations
 │   ├── src/
@@ -101,7 +101,7 @@ GEMINI_API_KEY="your_actual_api_key_here"
 
 **Chrome Extension:**
 1. Navigate to any website
-2. Click the Exractly extension icon
+2. Click the Extractly extension icon
 3. Enter: "Get the title and main heading"
 4. Click "Extract Data"
 5. View structured results!

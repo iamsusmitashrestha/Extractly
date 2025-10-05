@@ -1,4 +1,4 @@
-# Exractly Setup Guide
+# Extractly Setup Guide
 
 ## **Implementation Complete!**
 
@@ -64,11 +64,11 @@ curl http://localhost:3000/health
 3. Enable "Developer mode" (toggle in top right)
 4. Click "Load unpacked"
 5. Select the `/extension` folder from your project
-6. The Exractly extension should appear in your extensions list
+6. The Extractly extension should appear in your extensions list
 
 ### 5. **Test the Extension**
 1. Navigate to any website (try Amazon, news sites, etc.)
-2. Click the Exractly extension icon in your toolbar
+2. Click the Extractly extension icon in your toolbar
 3. Enter a natural language instruction like:
    - "Get the title, price, and rating"
    - "Extract the headline, author, and publish date"

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🧪 Testing Exractly API Endpoints"
+echo "🧪 Testing Extractly API Endpoints"
 echo "================================="
 
 # Test health endpoint
