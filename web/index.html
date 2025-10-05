@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exractly - Records Browser</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <h1>Exractly</h1>
+                <p>Data Extraction Records</p>
+            </div>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="totalRecords">-</span>
+                    <span class="stat-label">Total Records</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="successfulRecords">-</span>
+                    <span class="stat-label">Successful</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Search and Filters -->
+        <section class="search-section">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search by URL, instruction, or extracted data...">
+                <button id="searchBtn" class="btn btn-primary">Search</button>
+                <button id="clearBtn" class="btn btn-secondary">Clear</button>
+            </div>
+            
+            <div class="filters">
+                <select id="statusFilter">
+                    <option value="">All Statuses</option>
+                    <option value="completed">Completed</option>
+                    <option value="failed">Failed</option>
+                    <option value="processing">Processing</option>
+                    <option value="pending">Pending</option>
+                </select>
+                
+                <select id="sortBy">
+                    <option value="createdAt">Sort by Date</option>
+                    <option value="url">Sort by URL</option>
+                    <option value="processingStatus">Sort by Status</option>
+                </select>
+                
+                <select id="sortOrder">
+                    <option value="desc">Newest First</option>
+                    <option value="asc">Oldest First</option>
+                </select>
+            </div>
+        </section>
+
+        <!-- Records List -->
+        <section class="records-section">
+            <div class="records-header">
+                <h2>Extraction Records</h2>
+                <button id="refreshBtn" class="btn btn-secondary">Refresh</button>
+            </div>
+            
+            <div id="loadingIndicator" class="loading">Loading records...</div>
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+            
+            <div id="recordsList" class="records-list"></div>
+            
+            <!-- Pagination -->
+            <div class="pagination">
+                <button id="prevBtn" class="btn btn-secondary" disabled>Previous</button>
+                <span id="pageInfo">Page 1 of 1</span>
+                <button id="nextBtn" class="btn btn-secondary" disabled>Next</button>
+            </div>
+        </section>
+
+        <!-- Record Detail Modal -->
+        <div id="recordModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Record Details</h3>
+                    <button id="closeModal" class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <!-- Record details will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

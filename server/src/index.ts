@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import path from 'path';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 import { ingestRouter } from './controllers/ingestController';
@@ -17,9 +18,13 @@ const PORT = process.env.PORT || 3000;
 // Security middleware
 app.use(helmet());
 
-// CORS configuration for Chrome Extension
+// CORS configuration for Chrome Extension and Web UI
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'chrome-extension://*',
+  origin: [
+    'chrome-extension://*',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -50,6 +55,9 @@ app.use(express.urlencoded({
 // Request logging
 app.use(requestLogger);
 
+// Serve static files for web UI
+app.use(express.static(path.join(__dirname, '../../web')));
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
@@ -61,6 +69,11 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api', ingestRouter);
+
+// Serve web UI at root
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../web/index.html'));
+});
 
 // 404 handler
 app.use('*', (req, res) => {

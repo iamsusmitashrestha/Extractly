@@ -61,7 +61,12 @@ class ExractlyPopup {
         // Copy results button
         this.elements.copyResultsBtn.addEventListener('click', () => this.copyResults());
 
-        // Footer links (placeholder functionality)
+        // Footer links
+        document.getElementById('webDashboardLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.openWebDashboard();
+        });
+
         document.getElementById('historyLink').addEventListener('click', (e) => {
             e.preventDefault();
             this.showStatus('History feature coming soon!');
@@ -283,6 +288,21 @@ class ExractlyPopup {
 
     hideError() {
         this.elements.errorSection.style.display = 'none';
+    }
+
+    openWebDashboard() {
+        // Open the web dashboard in a new tab
+        const dashboardUrl = 'http://localhost:3000';
+        chrome.tabs.create({ url: dashboardUrl }, (tab) => {
+            if (chrome.runtime.lastError) {
+                logger.error('Error opening web dashboard:', chrome.runtime.lastError);
+                this.showStatus('Unable to open dashboard. Please check if the server is running.');
+            } else {
+                this.showStatus('Opening web dashboard...');
+                // Close the popup after opening the dashboard
+                setTimeout(() => window.close(), 500);
+            }
+        });
     }
 
     showStatus(message) {

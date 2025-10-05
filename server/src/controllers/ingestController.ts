@@ -100,14 +100,24 @@ router.get('/records/:id', asyncHandler(async (req: Request, res: Response) => {
   res.json(record);
 }));
 
-// GET /api/records - Get all extraction records (with pagination)
+// GET /api/records - Get all extraction records (with pagination and search)
 router.get('/records', asyncHandler(async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
   const skip = (page - 1) * limit;
+  
+  // Search and filter parameters
+  const search = req.query.search as string;
+  const status = req.query.status as string;
+  const sortBy = req.query.sortBy as string || 'createdAt';
+  const sortOrder = req.query.sortOrder as string || 'desc';
 
-  const records = await databaseService.getExtractionRecords(skip, limit);
-  const total = await databaseService.getExtractionRecordsCount();
+  const { records, total } = await databaseService.getExtractionRecords(skip, limit, {
+    search,
+    status,
+    sortBy,
+    sortOrder
+  });
 
   res.json({
     records,

@@ -40,14 +40,50 @@ export class DatabaseService {
     });
   }
 
-  async getExtractionRecords(skip: number = 0, take: number = 10): Promise<ExtractionRecord[]> {
-    return await prisma.extractionRecord.findMany({
-      skip,
-      take,
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+  async getExtractionRecords(
+    skip: number = 0, 
+    take: number = 10,
+    filters?: {
+      search?: string;
+      status?: string;
+      sortBy?: string;
+      sortOrder?: string;
+    }
+  ): Promise<{ records: ExtractionRecord[]; total: number }> {
+    const where: any = {};
+    
+    // Apply status filter
+    if (filters?.status) {
+      where.processingStatus = filters.status;
+    }
+    
+    // Apply search filter
+    if (filters?.search) {
+      where.OR = [
+        { url: { contains: filters.search, mode: 'insensitive' } },
+        { instruction: { contains: filters.search, mode: 'insensitive' } },
+        { errorMessage: { contains: filters.search, mode: 'insensitive' } }
+      ];
+    }
+    
+    // Determine sort order
+    const orderBy: any = {};
+    const sortField = filters?.sortBy || 'createdAt';
+    const sortDirection = filters?.sortOrder === 'asc' ? 'asc' : 'desc';
+    orderBy[sortField] = sortDirection;
+    
+    // Execute queries in parallel
+    const [records, total] = await Promise.all([
+      prisma.extractionRecord.findMany({
+        where,
+        skip,
+        take,
+        orderBy,
+      }),
+      prisma.extractionRecord.count({ where })
+    ]);
+    
+    return { records, total };
   }
 
   async getExtractionRecordsCount(): Promise<number> {

@@ -8,7 +8,8 @@ A powerful Chrome Extension that uses AI to extract structured data from web pag
 - **AI-Powered Extraction**: Uses Google Gemini to understand and extract data
 - **Structured Results**: Get clean, structured data with confidence scores
 - **Database Storage**: All extractions are saved with unique record IDs
-- **Modern UI**: Beautiful, responsive popup interface
+- **Chrome Extension**: Beautiful, responsive popup interface
+- **Web Dashboard**: Browse and search saved extraction records
 - **Type-Safe Backend**: Built with TypeScript and Prisma ORM
 
 ## Architecture
@@ -18,7 +19,12 @@ A powerful Chrome Extension that uses AI to extract structured data from web pag
 │  Chrome         │    │  Node.js        │    │  PostgreSQL     │
 │  Extension      │───▶│  Backend        │───▶│  Database       │
 │  (Manifest v3)  │    │  + Gemini AI    │    │  + Prisma ORM   │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+└─────────────────┘    │  + Web UI       │    └─────────────────┘
+                       └─────────────────┘
+┌─────────────────┐              │
+│  Web Dashboard  │──────────────┘
+│  (Browse/Search)│
+└─────────────────┘
 ```
 
 ## Quick Start
@@ -43,8 +49,8 @@ docker-compose ps
 ### 2. Backend Setup
 
 ```bash
-# Navigate to backend directory
-cd backend
+# Navigate to server directory
+cd server
 
 # Install dependencies
 npm install
@@ -75,17 +81,25 @@ The backend will be running at `http://localhost:3000`
 
 ### 4. Usage
 
+#### Chrome Extension
 1. Navigate to any webpage
 2. Click the Exractly extension icon
 3. Enter a natural language instruction (e.g., "Get the title, price, and rating")
 4. Click "Extract Data"
 5. View the structured results with confidence scores
 
+#### Web Dashboard
+1. Open your browser and go to `http://localhost:3000`
+2. Browse all saved extraction records
+3. Search by URL, instruction, or extracted data
+4. Filter by processing status
+5. Click on any record to view detailed information
+
 ## Project Structure
 
 ```
 exractly/
-├── backend/                 # Node.js + Express + TypeScript
+├── server/                  # Node.js + Express + TypeScript
 │   ├── prisma/
 │   │   ├── schema.prisma   # Database schema
 │   │   └── migrations/     # Database migrations
@@ -103,6 +117,10 @@ exractly/
 │   ├── background/         # Service worker
 │   ├── content/            # Content scripts
 │   └── manifest.json       # Extension configuration
+├── web/                    # Web Dashboard UI
+│   ├── index.html          # Main dashboard page
+│   ├── styles.css          # Dashboard styling
+│   └── script.js           # Dashboard functionality
 ├── database/
 │   └── init.sql           # Database initialization
 └── docker-compose.yml     # PostgreSQL container

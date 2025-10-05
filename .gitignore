@@ -18,6 +18,7 @@ package-lock.json
 dist/
 build/
 *.js.map
+server/logs/
 
 # IDE
 .vscode/
