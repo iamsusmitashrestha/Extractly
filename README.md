@@ -164,10 +164,21 @@ Extract data from HTML using natural language instructions.
 Get extraction record by ID.
 
 ### GET `/api/records`
-Get all extraction records with pagination.
+Get all extraction records with pagination, search, and filtering.
+
+**Query Parameters:**
+- `page` - Page number (default: 1)
+- `limit` - Records per page (default: 10)
+- `search` - Search across URL, instruction, and error messages
+- `status` - Filter by processing status (completed, failed, processing, pending)
+- `sortBy` - Sort field (createdAt, url, processingStatus)
+- `sortOrder` - Sort direction (asc, desc)
 
 ### GET `/health`
 Health check endpoint.
+
+### GET `/`
+Web dashboard UI for browsing and managing records.
 
 ## Development
 
