@@ -1,4 +1,5 @@
 import {PrismaClient} from '@prisma/client';
+import logger from '../utils/logger';
 // Global variable to store Prisma client instance
 declare global {
   var __prisma: PrismaClient | undefined;
@@ -16,18 +17,18 @@ if (process.env.NODE_ENV === 'development') {
 
 // Graceful shutdown
 process.on('beforeExit', async () => {
-  console.log('Disconnecting from database...');
+  logger.info('Disconnecting from database...');
   await prisma.$disconnect();
 });
 
 process.on('SIGINT', async () => {
-  console.log('Disconnecting from database...');
+  logger.info('Disconnecting from database...');
   await prisma.$disconnect();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  console.log('Disconnecting from database...');
+  logger.info('Disconnecting from database...');
   await prisma.$disconnect();
   process.exit(0);
 });

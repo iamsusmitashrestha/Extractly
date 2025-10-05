@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import logger from '../utils/logger';
 
 interface ExtractionResult {
   parsed_fields: string[];
@@ -22,32 +23,34 @@ export class GeminiService {
 
   async extractData(html: string, instruction: string): Promise<ExtractionResult> {
     try {
-      console.log('Processing with Gemini...');
+      logger.info('Processing with Gemini...');
 
       const prompt = this.buildExtractionPrompt(html, instruction);
+
+      console.log("--------------------------------------------", prompt);
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
 
-      console.log('Gemini response received');
+      logger.info('Gemini response received');
 
       // Parse the JSON response
       const extractionResult = this.parseGeminiResponse(text);
       
       return extractionResult;
     } catch (error) {
-      console.error(' Gemini processing error:', error);
+      logger.error('Gemini API error:', error);
       throw new Error(`Gemini processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   private buildExtractionPrompt(html: string, instruction: string): string {
-    console.log('Building extraction prompt...');
-    console.log('HTML content length:', html.length);
-    console.log('Instruction:', instruction);
+
     
     // Clean and preprocess HTML to focus on main content
     const processedHtml = this.preprocessHtml(html);
+
+    console.log("--------------------------------------------", processedHtml);
     
     return `
 You are an expert web data extraction AI. Your task is to analyze HTML content and extract specific information based on natural language instructions.
@@ -117,7 +120,32 @@ Extract the requested data now:`;
   }
 
   private parseGeminiResponse(response: string): ExtractionResult {
+    logger.debug('Parsing Gemini response...');
+    
     try {
+      // First attempt: direct JSON parsing
+      const parsed = JSON.parse(response);
+      
+      // Validate the structure
+      if (!parsed.parsed_fields || !parsed.extracted || !parsed.confidence) {
+        throw new Error('Invalid response structure from Gemini');
+      }
+
+      logger.debug('Successfully parsed Gemini response');
+      return this.validateExtractionResult(parsed);
+      
+    } catch (error) {
+      logger.error('Failed to parse Gemini response:', error);
+      
+      // Fallback: try to extract JSON from response
+      return this.fallbackParsing(response);
+    }
+  }
+
+  private fallbackParsing(response: string): ExtractionResult {
+    try {
+      logger.warn('Using fallback parsing...');
+      
       // Clean the response - remove any markdown formatting or extra text
       let cleanResponse = response.trim();
       
@@ -132,38 +160,17 @@ Extract the requested data now:`;
 
       const parsed = JSON.parse(jsonMatch[0]);
 
-      console.log('Extraction results:', {
-        fields: parsed.parsed_fields,
-        extracted: parsed.extracted,
-        confidence: parsed.confidence
-      });
+      logger.info('Fallback parsing successful');
 
       // Validate the structure
       if (!parsed.parsed_fields || !parsed.extracted || !parsed.confidence) {
         throw new Error('Invalid response structure from Gemini');
       }
 
-      // Ensure arrays and objects are properly formatted
-      const result: ExtractionResult = {
-        parsed_fields: Array.isArray(parsed.parsed_fields) ? parsed.parsed_fields : [],
-        extracted: typeof parsed.extracted === 'object' ? parsed.extracted : {},
-        confidence: typeof parsed.confidence === 'object' ? parsed.confidence : {}
-      };
-
-      // Validate confidence scores
-      Object.keys(result.confidence).forEach(key => {
-        const score = result.confidence[key];
-        if (typeof score !== 'number' || score < 0 || score > 1) {
-          result.confidence[key] = 0.0;
-        }
-      });
-
-      console.log(` Extracted ${result.parsed_fields.length} fields with Gemini`);
+      return this.validateExtractionResult(parsed);
       
-      return result;
     } catch (error) {
-      console.error(' Failed to parse Gemini response:', error);
-      console.error('Raw response:', response);
+      logger.error('Fallback parsing also failed:', error);
       
       // Return fallback result
       return {
@@ -174,6 +181,27 @@ Extract the requested data now:`;
     }
   }
 
+  private validateExtractionResult(parsed: any): ExtractionResult {
+    logger.debug('Validating extraction result...');
+    
+    // Ensure arrays and objects are properly formatted
+    const result: ExtractionResult = {
+      parsed_fields: Array.isArray(parsed.parsed_fields) ? parsed.parsed_fields : [],
+      extracted: typeof parsed.extracted === 'object' ? parsed.extracted : {},
+      confidence: typeof parsed.confidence === 'object' ? parsed.confidence : {}
+    };
+
+    // Validate confidence scores
+    Object.keys(result.confidence).forEach(key => {
+      const score = result.confidence[key];
+      if (typeof score !== 'number' || score < 0 || score > 1) {
+        result.confidence[key] = 0.0;
+      }
+    });
+
+    return result;
+  }
+
   // Health check method
   async healthCheck(): Promise<boolean> {
     try {
@@ -181,7 +209,7 @@ Extract the requested data now:`;
       const response = await result.response;
       return response.text().includes('OK');
     } catch (error) {
-      console.error('Gemini health check failed:', error);
+      logger.error('Gemini health check failed:', error);
       return false;
     }
   }

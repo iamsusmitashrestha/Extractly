@@ -3,6 +3,7 @@ import { asyncHandler, createError } from '../middleware/errorHandler';
 import { databaseService } from '../services/databaseService';
 import { geminiService } from '../services/geminiService';
 import { validateIngestRequest } from '../utils/validation';
+import logger from '../utils/logger';
 
 const router = Router();
 
@@ -31,8 +32,8 @@ router.post('/ingest', asyncHandler(async (req: Request, res: Response) => {
     throw createError(`Validation failed: ${validation.errors.join(', ')}`, 400);
   }
 
-  console.log(`Processing extraction request for: ${url}`);
-  console.log(`Instruction: ${instruction}`);
+  logger.info(`Processing extraction request for: ${url}`);
+  logger.info(`Instruction: ${instruction}`);
 
   // Create initial database record
   const record = await databaseService.createExtractionRecord({
@@ -41,7 +42,7 @@ router.post('/ingest', asyncHandler(async (req: Request, res: Response) => {
     htmlContent: html,
   });
 
-  console.log(`Created record with ID: ${record.id}`);
+  logger.info(`Created record with ID: ${record.id}`);
 
   try {
     // Update status to processing
@@ -60,7 +61,7 @@ router.post('/ingest', asyncHandler(async (req: Request, res: Response) => {
       processingStatus: 'completed'
     });
 
-    console.log(` Successfully processed extraction for record: ${record.id}`);
+    logger.info(`Successfully processed extraction for record: ${record.id}`);
 
     // Return response
     const response: IngestResponse = {
@@ -75,7 +76,7 @@ router.post('/ingest', asyncHandler(async (req: Request, res: Response) => {
     res.json(response);
 
   } catch (error) {
-    console.error(` Processing failed for record ${record.id}:`, error);
+    logger.error(`Processing failed for record ${record.id}:`, error);
 
     // Update record with error
     await databaseService.updateExtractionRecord(record.id, {

@@ -1,8 +1,11 @@
 // Background service worker for Exractly Chrome Extension
 
+// Import logger utility
+importScripts('../utils/logger.js');
+
 // Extension installation handler
 chrome.runtime.onInstalled.addListener((details) => {
-    console.log('Exractly extension installed:', details.reason);
+    logger.info('Exractly extension installed:', details.reason);
     
     if (details.reason === 'install') {
         // Set default settings
@@ -12,13 +15,13 @@ chrome.runtime.onInstalled.addListener((details) => {
             timeout: 30000
         });
         
-        console.log('Default settings configured');
+        logger.info('Default settings configured');
     }
 });
 
 // Handle messages from content scripts and popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log('Background received message:', request.type);
+    logger.debug('Background received message:', request.type);
     
     switch (request.type) {
         case 'GET_PAGE_HTML':
@@ -34,7 +37,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             return true;
             
         default:
-            console.warn('Unknown message type:', request.type);
+            logger.warn('Unknown message type:', request.type);
             sendResponse({ error: 'Unknown message type' });
     }
 });
@@ -67,7 +70,7 @@ async function handleGetPageHTML(request, sender, sendResponse) {
 
         sendResponse({ success: true, data: result.result });
     } catch (error) {
-        console.error('Error getting page HTML:', error);
+        logger.error('Error getting page HTML:', error);
         sendResponse({ 
             success: false, 
             error: error.message || 'Failed to get page content' 
@@ -102,7 +105,7 @@ async function handleExtractData(request, sender, sendResponse) {
         
         sendResponse({ success: true, data: result });
     } catch (error) {
-        console.error('Error extracting data:', error);
+        logger.error('Error extracting data:', error);
         sendResponse({ 
             success: false, 
             error: error.message || 'Failed to extract data' 
@@ -116,7 +119,7 @@ async function handleGetSettings(request, sender, sendResponse) {
         const settings = await getSettings();
         sendResponse({ success: true, data: settings });
     } catch (error) {
-        console.error('Error getting settings:', error);
+        logger.error('Error getting settings:', error);
         sendResponse({ 
             success: false, 
             error: error.message || 'Failed to get settings' 
@@ -164,9 +167,9 @@ async function storeExtractionResult(result) {
             chrome.storage.local.set({ extractionHistory: updatedHistory }, resolve);
         });
 
-        console.log('Extraction result stored in history');
+        logger.info('Extraction result stored in history');
     } catch (error) {
-        console.error('Error storing extraction result:', error);
+        logger.error('Error storing extraction result:', error);
     }
 }
 
@@ -174,19 +177,19 @@ async function storeExtractionResult(result) {
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && tab.url) {
         // Could be used to auto-refresh content or show notifications
-        console.log('Tab updated:', tab.url);
+        logger.debug('Tab updated:', tab.url);
     }
 });
 
 // Handle extension action click (optional - popup is default)
 chrome.action.onClicked.addListener((tab) => {
-    console.log('Extension action clicked for tab:', tab.url);
+    logger.info('Extension action clicked for tab:', tab.url);
     // This won't fire if popup is set, but keeping for future use
 });
 
 // Cleanup on extension shutdown
 chrome.runtime.onSuspend.addListener(() => {
-    console.log('Exractly extension suspending...');
+    logger.info('Exractly extension suspending...');
 });
 
-console.log('Exractly background service worker loaded');
+logger.info('Exractly background service worker loaded');

@@ -4,17 +4,25 @@
 (function() {
     'use strict';
 
+    // Simple logger for content script
+    const logger = {
+        info: (message, ...args) => console.log(`[INFO] ${new Date().toISOString()} - ${message}`, ...args),
+        error: (message, ...args) => console.error(`[ERROR] ${new Date().toISOString()} - ${message}`, ...args),
+        warn: (message, ...args) => console.warn(`[WARN] ${new Date().toISOString()} - ${message}`, ...args),
+        debug: (message, ...args) => console.debug(`[DEBUG] ${new Date().toISOString()} - ${message}`, ...args)
+    };
+
     // Prevent multiple injections
     if (window.exractlyContentScript) {
         return;
     }
     window.exractlyContentScript = true;
 
-    console.log('Exractly content script loaded on:', window.location.href);
+    logger.info('Exractly content script loaded on:', window.location.href);
 
     // Listen for messages from popup or background script
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-        console.log('Content script received message:', request.type);
+        logger.debug('Content script received message:', request.type);
 
         switch (request.type) {
             case 'GET_PAGE_CONTENT':
@@ -30,7 +38,7 @@
                 return true;
 
             default:
-                console.warn('Unknown message type in content script:', request.type);
+                logger.warn('Unknown message type in content script:', request.type);
                 sendResponse({ error: 'Unknown message type' });
         }
     });
@@ -49,7 +57,7 @@
 
             sendResponse({ success: true, data: content });
         } catch (error) {
-            console.error('Error getting page content:', error);
+            logger.error('Error getting page content:', error);
             sendResponse({ 
                 success: false, 
                 error: error.message || 'Failed to get page content' 
@@ -75,13 +83,13 @@
                         element.style.backgroundColor = 'rgba(102, 126, 234, 0.1)';
                     });
                 } catch (e) {
-                    console.warn('Invalid selector:', selector);
+                    logger.warn('Invalid selector:', selector);
                 }
             });
 
             sendResponse({ success: true, highlighted: selectors.length });
         } catch (error) {
-            console.error('Error highlighting elements:', error);
+            logger.error('Error highlighting elements:', error);
             sendResponse({ 
                 success: false, 
                 error: error.message || 'Failed to highlight elements' 
@@ -95,7 +103,7 @@
             cleanHighlights();
             sendResponse({ success: true });
         } catch (error) {
-            console.error('Error cleaning highlights:', error);
+            logger.error('Error cleaning highlights:', error);
             sendResponse({ 
                 success: false, 
                 error: error.message || 'Failed to clean highlights' 

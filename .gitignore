@@ -1,6 +1,11 @@
 # OS Files
 .DS_Store
 
+# Logs
+logs/
+*.log
+backend/logs/
+
 # Dependencies
 node_modules/
 npm-debug.log*

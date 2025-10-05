@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import logger from '../utils/logger';
 
 export interface AppError extends Error {
   statusCode?: number;
@@ -15,9 +16,9 @@ export const errorHandler = (
   const message = error.message || 'Internal Server Error';
 
   // Log error details
-  console.error(` Error ${statusCode}: ${message}`);
-  console.error(`Path: ${req.method} ${req.path}`);
-  console.error(`Stack: ${error.stack}`);
+  logger.error(`Error ${statusCode}: ${message}`);
+  logger.error(`Path: ${req.method} ${req.path}`);
+  logger.error(`Stack: ${error.stack}`);
 
   // Don't expose internal errors in production
   const isDevelopment = process.env.NODE_ENV === 'development';

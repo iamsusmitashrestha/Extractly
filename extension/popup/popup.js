@@ -1,4 +1,13 @@
 // Popup JavaScript for Exractly Chrome Extension
+
+// Simple logger for popup
+const logger = {
+    info: (message, ...args) => console.log(`[INFO] ${new Date().toISOString()} - ${message}`, ...args),
+    error: (message, ...args) => console.error(`[ERROR] ${new Date().toISOString()} - ${message}`, ...args),
+    warn: (message, ...args) => console.warn(`[WARN] ${new Date().toISOString()} - ${message}`, ...args),
+    debug: (message, ...args) => console.debug(`[DEBUG] ${new Date().toISOString()} - ${message}`, ...args)
+};
+
 class ExractlyPopup {
     constructor() {
         this.apiBaseUrl = 'http://localhost:3000/api';
@@ -84,7 +93,7 @@ class ExractlyPopup {
                 this.showStatus('Please navigate to a webpage to extract data');
             }
         } catch (error) {
-            console.error('Error loading current tab:', error);
+            logger.error('Error loading current tab:', error);
             this.elements.currentUrl.textContent = 'Error loading page';
             this.showStatus('Error: Unable to access current tab');
         }
@@ -142,7 +151,7 @@ class ExractlyPopup {
             this.showStatus(`Successfully extracted ${result.parsed_fields.length} fields`);
 
         } catch (error) {
-            console.error('Extraction error:', error);
+            logger.error('Extraction error:', error);
             this.showError(error.message || 'Failed to extract data. Please try again.');
             this.showStatus('Extraction failed');
         } finally {
@@ -163,7 +172,7 @@ class ExractlyPopup {
 
             return result.result;
         } catch (error) {
-            console.error('Error getting page HTML:', error);
+            logger.error('Error getting page HTML:', error);
             throw new Error('Unable to access page content. Please refresh the page and try again.');
         }
     }

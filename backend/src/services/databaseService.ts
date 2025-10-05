@@ -1,4 +1,5 @@
 import { prisma } from '../config/database';
+import logger from '../utils/logger';
 import { ExtractionRecord } from '@prisma/client';
 
 export class DatabaseService {
@@ -83,7 +84,7 @@ export class DatabaseService {
       await prisma.$queryRaw`SELECT 1`;
       return true;
     } catch (error) {
-      console.error('Database health check failed:', error);
+      logger.error('Database health check failed:', error);
       return false;
     }
   }

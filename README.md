@@ -259,25 +259,6 @@ MAX_HTML_SIZE=5242880
 - **Extension logs**: Open Chrome DevTools on the extension popup
 - **Database logs**: Check Docker logs with `docker-compose logs postgres`
 
-## License
-
-MIT License - see LICENSE file for details.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## Support
-
-For issues and questions:
-- Check the troubleshooting section above
-- Review the logs for error messages
-- Create an issue on GitHub with detailed information
-
 ---
 
 **Built using Node.js, TypeScript, Prisma, and Google Gemini AI**
