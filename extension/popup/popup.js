@@ -66,17 +66,7 @@ class ExtractlyPopup {
             e.preventDefault();
             this.openWebDashboard();
         });
-
-        document.getElementById('historyLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showStatus('History feature coming soon!');
-        });
-
-        document.getElementById('settingsLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showStatus('Settings feature coming soon!');
-        });
-
+                                                                    
         document.getElementById('helpLink').addEventListener('click', (e) => {
             e.preventDefault();
             this.showStatus('Help: Enter natural language instructions to extract data from the current page.');
