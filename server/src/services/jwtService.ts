@@ -1,6 +1,6 @@
 import jwt, { SignOptions } from "jsonwebtoken";
 import crypto from "crypto";
-import { addDays } from "@/utils/date";
+import { addDays } from "../utils/date";
 import { prisma } from "../config/database";
 
 const ACCESS_TOKEN_EXPIRY_MINUTES: number = process.env
@@ -13,7 +13,11 @@ const REFRESH_TOKEN_EXPIRY_DAYS = Number(
 );
 
 // create access token (JWT)
-export function signAccessToken(payload: object) {
+export function signAccessToken(payload: object): string {
+  if (!ACCESS_TOKEN_SECRET) {
+    throw new Error("ACCESS_TOKEN_SECRET must be defined");
+  }
+
   const options: SignOptions = {
     expiresIn: `${ACCESS_TOKEN_EXPIRY_MINUTES}m`, // Convert minutes to string with 'm' suffix
   };

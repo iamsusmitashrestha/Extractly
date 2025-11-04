@@ -2,41 +2,44 @@ import bcrypt from "bcrypt";
 import { prisma } from "../config/database";
 
 import { signAccessToken, createRefreshToken, sha256 } from "./jwtService";
+import { LoginInput, RegisterInput } from "../middleware/validationMiddleware";
+import { ConflictError, NotFoundError } from "../errrors/AppError";
+
 const SALT_ROUNDS = 10;
 
-export async function registerUser(
-  email: string,
-  password: string,
-  name?: string
-) {
-  const existing = await prisma.user.findUnique({ where: { email } });
+export async function registerUser(user: RegisterInput) {
+  const existing = await prisma.user.findUnique({
+    where: { email: user.email },
+  });
   if (existing) {
-    throw new Error("Email already in use");
+    throw new ConflictError("Email already in use");
   }
-  const hashed = await bcrypt.hash(password, SALT_ROUNDS);
-  const user = await prisma.user.create({
+  const hashed = await bcrypt.hash(user.password, SALT_ROUNDS);
+  const newUser = await prisma.user.create({
     data: {
-      email,
+      email: user.email,
       password: hashed,
-      name,
+      name: user.name,
     },
     select: { id: true, email: true, name: true, createdAt: true },
   });
-  return user;
+  return newUser;
 }
 
-export async function loginUser(email: string, password: string) {
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) throw new Error("User not found");
+export async function loginUser(user: LoginInput) {
+  const existingUser = await prisma.user.findUnique({
+    where: { email: user.email },
+  });
+  if (!existingUser) throw new NotFoundError("User not found");
 
-  const ok = await bcrypt.compare(password, user.password);
+  const ok = await bcrypt.compare(user.password, existingUser.password);
   if (!ok) throw new Error("Incorrect password");
 
-  const accessToken = signAccessToken({ userId: user.id });
-  const refresh = await createRefreshToken(user.id);
+  const accessToken = signAccessToken({ userId: existingUser.id });
+  const refresh = await createRefreshToken(existingUser.id);
 
   return {
-    user: { id: user.id, email: user.email },
+    user: { id: existingUser.id, email: existingUser.email },
     accessToken,
     refreshToken: refresh.token, // raw token to return to client
     refreshTokenExpiresAt: refresh.expiresAt,

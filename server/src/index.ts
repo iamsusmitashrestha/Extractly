@@ -27,6 +27,8 @@ app.use(
       "chrome-extension://*",
       "http://localhost:3000",
       "http://127.0.0.1:3000",
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
@@ -46,6 +48,21 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 app.use(limiter);
+
+// Body parser middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+// Request logging
+app.use(requestLogger);
+
+// Mount routes
+app.use("/auth", authRouter);
+app.use("/api/ingest", ingestRouter);
+
+// Error handling middleware
+app.use(errorHandler);
 
 // Body parsing middleware
 app.use(
@@ -79,8 +96,8 @@ app.get("/health", (req, res) => {
 app.use(cookieParser());
 
 // API routes
-app.use("/api", ingestRouter);
-app.use("/api/auth", authRouter);
+app.use("/api/auth", authRouter); // Mount auth routes first
+app.use("/api", ingestRouter); // Then other API routes
 
 // Serve web UI at root
 app.get("/", (req, res) => {

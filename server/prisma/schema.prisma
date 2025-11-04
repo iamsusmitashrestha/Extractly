@@ -14,9 +14,10 @@ model User {
   id        String         @id @default(uuid())
   email     String         @unique
   password  String
-  name      String?
+  name      String
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
+  tokenVersion   Int            @default(0)
   tokens    RefreshToken[]
 }
 

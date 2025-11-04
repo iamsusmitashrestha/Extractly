@@ -1,10 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import logger from '../utils/logger';
-
-export interface AppError extends Error {
-  statusCode?: number;
-  isOperational?: boolean;
-}
+import { Request, Response, NextFunction } from "express";
+import logger from "../utils/logger";
+import { AppError } from "../errrors/AppError";
 
 export const errorHandler = (
   error: AppError,
@@ -13,7 +9,7 @@ export const errorHandler = (
   next: NextFunction
 ) => {
   const statusCode = error.statusCode || 500;
-  const message = error.message || 'Internal Server Error';
+  const message = error.message || "Internal Server Error";
 
   // Log error details
   logger.error(`Error ${statusCode}: ${message}`);
@@ -21,24 +17,17 @@ export const errorHandler = (
   logger.error(`Stack: ${error.stack}`);
 
   // Don't expose internal errors in production
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  
+  const isDevelopment = process.env.NODE_ENV === "development";
+
   res.status(statusCode).json({
     error: message,
-    ...(isDevelopment && { 
+    ...(isDevelopment && {
       stack: error.stack,
       path: req.path,
       method: req.method,
-      timestamp: new Date().toISOString()
-    })
+      timestamp: new Date().toISOString(),
+    }),
   });
-};
-
-export const createError = (message: string, statusCode: number = 500): AppError => {
-  const error: AppError = new Error(message);
-  error.statusCode = statusCode;
-  error.isOperational = true;
-  return error;
 };
 
 export const asyncHandler = (fn: Function) => {
