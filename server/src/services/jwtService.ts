@@ -13,13 +13,18 @@ const REFRESH_TOKEN_EXPIRY_DAYS = Number(
 );
 
 // create access token (JWT)
-export function signAccessToken(payload: object): string {
+export interface AccessTokenPayload {
+  userId: string;
+  tokenVersion: number;
+}
+
+export function signAccessToken(payload: AccessTokenPayload): string {
   if (!ACCESS_TOKEN_SECRET) {
     throw new Error("ACCESS_TOKEN_SECRET must be defined");
   }
 
   const options: SignOptions = {
-    expiresIn: `${ACCESS_TOKEN_EXPIRY_MINUTES}m`, // Convert minutes to string with 'm' suffix
+    expiresIn: `${ACCESS_TOKEN_EXPIRY_MINUTES}m`,
   };
 
   return jwt.sign(payload, ACCESS_TOKEN_SECRET, options);

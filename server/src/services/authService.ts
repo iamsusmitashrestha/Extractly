@@ -14,6 +14,7 @@ export async function registerUser(user: RegisterInput) {
   if (existing) {
     throw new ConflictError("Email already in use");
   }
+
   const hashed = await bcrypt.hash(user.password, SALT_ROUNDS);
   const newUser = await prisma.user.create({
     data: {
@@ -35,7 +36,10 @@ export async function loginUser(user: LoginInput) {
   const ok = await bcrypt.compare(user.password, existingUser.password);
   if (!ok) throw new Error("Incorrect password");
 
-  const accessToken = signAccessToken({ userId: existingUser.id });
+  const accessToken = signAccessToken({
+    userId: existingUser.id,
+    tokenVersion: (existingUser as any).tokenVersion ?? 0,
+  });
   const refresh = await createRefreshToken(existingUser.id);
 
   return {
@@ -59,8 +63,23 @@ export async function rotateRefreshToken(rawToken: string) {
     include: { user: true },
   });
 
-  if (!tokenRecord || tokenRecord.revoked) {
+  if (!tokenRecord) {
     throw new Error("Invalid refresh token");
+  }
+  // Reuse detection: token was already revoked -> likely theft
+  if (tokenRecord.revoked) {
+    // Revoke all active refresh tokens for this user
+    await prisma.refreshToken.updateMany({
+      where: { userId: tokenRecord.userId, revoked: false },
+      data: { revoked: true },
+    });
+    // Bump tokenVersion to invalidate existing access tokens immediately
+    // @ts-ignore - tokenVersion exists in DB; Prisma client types may be stale
+    await prisma.user.update({
+      where: { id: tokenRecord.userId },
+      data: { tokenVersion: { increment: 1 } },
+    });
+    throw new Error("Refresh token reuse detected");
   }
   if (tokenRecord.expiresAt < new Date()) {
     throw new Error("Refresh token expired");
@@ -71,10 +90,13 @@ export async function rotateRefreshToken(rawToken: string) {
     where: { id: tokenRecord.id },
     data: { revoked: true, lastUsedAt: new Date() },
   });
-
   // Issue new refresh token (rotation)
   const newRefresh = await createRefreshToken(tokenRecord.userId);
-  const accessToken = signAccessToken({ userId: tokenRecord.userId });
+  const accessToken = signAccessToken({
+    userId: tokenRecord.userId,
+    // @ts-ignore - tokenVersion exists in DB; Prisma client types may be stale
+    tokenVersion: (tokenRecord.user as any).tokenVersion ?? 0,
+  });
 
   return {
     accessToken,

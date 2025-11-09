@@ -3,7 +3,12 @@ import {
   loginSchema,
   registerSchema,
 } from "../middleware/validationMiddleware";
-import { loginUser, registerUser } from "../services/authService";
+import {
+  loginUser,
+  registerUser,
+  rotateRefreshToken,
+  revokeRefreshToken,
+} from "../services/authService";
 import { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 
@@ -39,6 +44,7 @@ class AuthController {
       res.cookie("refreshToken", result.refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
@@ -52,36 +58,52 @@ class AuthController {
     }
   }
 
-  // async refresh(req: Request, res: Response) {
-  //   try {
-  //     const refreshToken = req.cookies.refreshToken;
-  //     if (!refreshToken) {
-  //       return res.status(401).json({ message: "Refresh token required" });
-  //     }
+  async refresh(req: Request, res: Response) {
+    try {
+      const refreshToken = req.cookies.refreshToken;
+      if (!refreshToken) {
+        return res.status(401).json({ message: "Refresh token required" });
+      }
 
-  //     const tokens = await refreshToken(refreshToken);
+      const tokens = await rotateRefreshToken(refreshToken);
 
-  //     res.cookie("refreshToken", tokens.refreshToken, {
-  //       httpOnly: true,
-  //       secure: process.env.NODE_ENV === "production",
-  //       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  //     });
+      res.cookie("refreshToken", tokens.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
 
-  //     res.json({
-  //       accessToken: tokens.accessToken,
-  //       message: "Token refresh successful",
-  //     });
-  //   } catch (error: any) {
-  //     res.status(401).json({ message: error.message });
-  //   }
-  // }
+      return res.json({
+        accessToken: tokens.accessToken,
+        message: "Token refresh successful",
+      });
+    } catch (error: any) {
+      return res.status(401).json({ message: error.message });
+    }
+  }
 
   async logout(req: Request, res: Response) {
+    const refreshToken = req.cookies.refreshToken;
+    if (refreshToken) {
+      try {
+        await revokeRefreshToken(refreshToken);
+      } catch {}
+    }
     res.clearCookie("refreshToken", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     });
-    res.json({ message: "Logout successful" });
+    return res.json({ message: "Logout successful" });
+  }
+
+  async me(req: Request, res: Response) {
+    const user = (req as any).user;
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    return res.json({ user });
   }
 }
 
