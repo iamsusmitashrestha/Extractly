@@ -49,9 +49,18 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Body parser middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// --- Body & Cookie parsers ---
+// parse the incoming request body into req.body.
+// For JSON payloads
+app.use(express.json({ limit: process.env.MAX_BODY_SIZE || "10mb" }));
+// For form submissions
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: process.env.MAX_BODY_SIZE || "10mb",
+  })
+);
+//Reads cookies from the request headers and stores them in req.cookies. Used mainly for JWT refresh tokens or session management.
 app.use(cookieParser());
 
 // Request logging
@@ -61,28 +70,6 @@ app.use(requestLogger);
 app.use("/auth", authRouter);
 app.use("/api/ingest", ingestRouter);
 
-// Error handling middleware
-app.use(errorHandler);
-
-// Body parsing middleware
-app.use(
-  express.json({
-    limit: process.env.MAX_BODY_SIZE || "10mb",
-  })
-);
-app.use(
-  express.urlencoded({
-    extended: true,
-    limit: process.env.MAX_BODY_SIZE || "10mb",
-  })
-);
-
-// Request logging
-app.use(requestLogger);
-
-// Serve static files for web UI
-app.use(express.static(path.join(__dirname, "../../web")));
-
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.json({
@@ -90,18 +77,6 @@ app.get("/health", (req, res) => {
     timestamp: new Date().toISOString(),
     service: "Extractly-backend",
   });
-});
-
-// Cookie parser middleware
-app.use(cookieParser());
-
-// API routes
-app.use("/api/auth", authRouter); // Mount auth routes first
-app.use("/api", ingestRouter); // Then other API routes
-
-// Serve web UI at root
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../../web/index.html"));
 });
 
 // 404 handler
