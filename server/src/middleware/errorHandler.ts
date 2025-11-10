@@ -1,34 +1,47 @@
 import { Request, Response, NextFunction } from "express";
-import logger from "../utils/logger";
-import { AppError } from "../errrors/AppError";
+import { AppError, ValidationError } from "../errrors/AppError";
 
 export const errorHandler = (
-  error: AppError,
+  err: Error,
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  const statusCode = error.statusCode || 500;
-  const message = error.message || "Internal Server Error";
+  if (err instanceof AppError) {
+    return res.status(err.statusCode).json({
+      success: false,
+      message: err.message,
+      errors: err.errors || null, // only present for validation errors
+    });
+  }
 
-  // Log error details
-  logger.error(`Error ${statusCode}: ${message}`);
-  logger.error(`Path: ${req.method} ${req.path}`);
-  logger.error(`Stack: ${error.stack}`);
+  // If it's a ZodError (in case you missed wrapping it)
+  if (isZodError(err)) {
+    const fieldErrors = err.flatten().fieldErrors;
+    return res.status(400).json({
+      success: false,
+      message: "Validation failed",
+      errors: fieldErrors,
+    });
+  }
 
-  // Don't expose internal errors in production
-  const isDevelopment = process.env.NODE_ENV === "development";
+  if (err instanceof ValidationError) {
+    return res.status(400).json({
+      message: err.message,
+      errors: err.errors, // this contains field-specific messages
+    });
+  }
 
-  res.status(statusCode).json({
-    error: message,
-    ...(isDevelopment && {
-      stack: error.stack,
-      path: req.path,
-      method: req.method,
-      timestamp: new Date().toISOString(),
-    }),
+  return res.status(500).json({
+    success: false,
+    message: "Something went wrong",
   });
 };
+
+// Helper type guard for ZodError
+function isZodError(error: any): error is import("zod").ZodError {
+  return error && typeof error === "object" && "issues" in error;
+}
 
 export const asyncHandler = (fn: Function) => {
   return (req: Request, res: Response, next: NextFunction) => {

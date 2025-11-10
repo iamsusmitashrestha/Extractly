@@ -10,7 +10,6 @@ import {
   revokeRefreshToken,
 } from "../services/authService";
 import { NextFunction, Request, Response } from "express";
-import { ZodError } from "zod";
 
 class AuthController {
   async register(req: Request, res: Response, next: NextFunction) {

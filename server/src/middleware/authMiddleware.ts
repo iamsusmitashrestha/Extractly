@@ -15,7 +15,10 @@ export async function requireAuth(
       return;
     }
     const token = authHeader.split(" ")[1];
-    const decoded = verifyAccessToken(token) as { userId?: string; tokenVersion?: number };
+    const decoded = verifyAccessToken(token) as {
+      userId?: string;
+      tokenVersion?: number;
+    };
     const userId = decoded?.userId;
     if (!userId) {
       res.status(401).json({ error: "Invalid token" });
