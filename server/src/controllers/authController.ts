@@ -40,10 +40,13 @@ class AuthController {
 
       const result = await loginUser(parsed.data);
 
+      const secure =
+        process.env.COOKIE_SECURE === "true" ||
+        process.env.NODE_ENV === "production";
       res.cookie("refreshToken", result.refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        secure,
+        sameSite: secure ? "none" : ("lax" as const),
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
@@ -66,10 +69,13 @@ class AuthController {
 
       const tokens = await rotateRefreshToken(refreshToken);
 
+      const secure =
+        process.env.COOKIE_SECURE === "true" ||
+        process.env.NODE_ENV === "production";
       res.cookie("refreshToken", tokens.refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        secure,
+        sameSite: secure ? "none" : ("lax" as const),
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
@@ -89,10 +95,13 @@ class AuthController {
         await revokeRefreshToken(refreshToken);
       } catch {}
     }
+    const secure =
+      process.env.COOKIE_SECURE === "true" ||
+      process.env.NODE_ENV === "production";
     res.clearCookie("refreshToken", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure,
+      sameSite: secure ? "none" : ("lax" as const),
     });
     return res.json({ message: "Logout successful" });
   }

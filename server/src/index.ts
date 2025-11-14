@@ -10,6 +10,7 @@ import { requestLogger } from "./middleware/requestLogger";
 import { ingestRouter } from "./controllers/ingestController";
 import authRouter from "./routes/authRoutes";
 import logger from "./utils/logger";
+import oauthRouter from "./routes/oauthRoutes";
 
 // Load environment variables
 dotenv.config();
@@ -21,17 +22,26 @@ const PORT = process.env.PORT || 3000;
 app.use(helmet());
 
 // CORS configuration for Chrome Extension and Web UI
+const allowedOrigins = new Set([
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+]);
+
 app.use(
   cors({
-    origin: [
-      "chrome-extension://*",
-      "http://localhost:3000",
-      "http://127.0.0.1:3000",
-      "http://localhost:5173",
-      "http://127.0.0.1:5173",
-    ],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+      // Allow Chrome extensions
+      if (origin.startsWith("chrome-extension://")) return callback(null, true);
+      // Allow known web origins
+      if (allowedOrigins.has(origin)) return callback(null, true);
+      return callback(new Error(`CORS not allowed for origin: ${origin}`), false);
+    },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
@@ -68,6 +78,7 @@ app.use(requestLogger);
 
 // Mount routes
 app.use("/auth", authRouter);
+app.use("/auth/oauth", oauthRouter);
 app.use("/api/ingest", ingestRouter);
 
 // Health check endpoint

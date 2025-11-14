@@ -33,7 +33,7 @@ export async function loginUser(user: LoginInput) {
   });
   if (!existingUser) throw new NotFoundError("User not found");
 
-  const ok = await bcrypt.compare(user.password, existingUser.password);
+  const ok = await bcrypt.compare(user.password, existingUser.password!);
   if (!ok) throw new Error("Incorrect password");
 
   const accessToken = signAccessToken({
