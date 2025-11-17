@@ -1,195 +1,253 @@
 // Background service worker for Extractly Chrome Extension
 
 // Import logger utility
-importScripts('../utils/logger.js');
+importScripts("../utils/logger.js");
 
 // Extension installation handler
 chrome.runtime.onInstalled.addListener((details) => {
-    logger.info('Extractly extension installed:', details.reason);
-    
-    if (details.reason === 'install') {
-        // Set default settings
-        chrome.storage.local.set({
-            apiBaseUrl: 'http://localhost:3000/api',
-            maxRetries: 3,
-            timeout: 30000
-        });
-        
-        logger.info('Default settings configured');
-    }
+  logger.info("Extractly extension installed:", details.reason);
+
+  if (details.reason === "install") {
+    // Set default settings
+    chrome.storage.local.set({
+      apiBaseUrl: "http://localhost:3000/api",
+      maxRetries: 3,
+      timeout: 30000,
+    });
+
+    logger.info("Default settings configured");
+  }
 });
 
 // Handle messages from content scripts and popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    logger.debug('Background received message:', request.type);
-    
-    switch (request.type) {
-        case 'GET_PAGE_HTML':
-            handleGetPageHTML(request, sender, sendResponse);
-            return true; // Keep message channel open for async response
-            
-        case 'EXTRACT_DATA':
-            handleExtractData(request, sender, sendResponse);
-            return true; // Keep message channel open for async response
-            
-        case 'GET_SETTINGS':
-            handleGetSettings(request, sender, sendResponse);
-            return true;
-            
-        default:
-            logger.warn('Unknown message type:', request.type);
-            sendResponse({ error: 'Unknown message type' });
-    }
+  logger.debug("Background received message:", request.type);
+
+  switch (request.type) {
+    case "ACCESS_TOKEN_SYNCED":
+      // Token was updated by content script; nothing to do here for now
+      sendResponse({ ok: true });
+      return true;
+    case "GET_PAGE_HTML":
+      handleGetPageHTML(request, sender, sendResponse);
+      return true; // Keep message channel open for async response
+
+    case "EXTRACT_DATA":
+      handleExtractData(request, sender, sendResponse);
+      return true; // Keep message channel open for async response
+
+    case "GET_SETTINGS":
+      handleGetSettings(request, sender, sendResponse);
+      return true;
+
+    default:
+      logger.warn("Unknown message type:", request.type);
+      sendResponse({ error: "Unknown message type" });
+  }
 });
 
 // Handle getting page HTML content
 async function handleGetPageHTML(request, sender, sendResponse) {
-    try {
-        const tabId = sender.tab?.id || request.tabId;
-        
-        if (!tabId) {
-            throw new Error('No tab ID available');
-        }
+  try {
+    const tabId = sender.tab?.id || request.tabId;
 
-        // Execute script to get HTML content
-        const [result] = await chrome.scripting.executeScript({
-            target: { tabId: tabId },
-            function: () => {
-                // Remove script tags and clean up HTML
-                const clonedDoc = document.cloneNode(true);
-                const scripts = clonedDoc.querySelectorAll('script');
-                scripts.forEach(script => script.remove());
-                
-                return {
-                    html: clonedDoc.documentElement.outerHTML,
-                    url: window.location.href,
-                    title: document.title
-                };
-            }
-        });
-
-        sendResponse({ success: true, data: result.result });
-    } catch (error) {
-        logger.error('Error getting page HTML:', error);
-        sendResponse({ 
-            success: false, 
-            error: error.message || 'Failed to get page content' 
-        });
+    if (!tabId) {
+      throw new Error("No tab ID available");
     }
+
+    // Execute script to get HTML content
+    const [result] = await chrome.scripting.executeScript({
+      target: { tabId: tabId },
+      function: () => {
+        // Remove script tags and clean up HTML
+        const clonedDoc = document.cloneNode(true);
+        const scripts = clonedDoc.querySelectorAll("script");
+        scripts.forEach((script) => script.remove());
+
+        return {
+          html: clonedDoc.documentElement.outerHTML,
+          url: window.location.href,
+          title: document.title,
+        };
+      },
+    });
+
+    sendResponse({ success: true, data: result.result });
+  } catch (error) {
+    logger.error("Error getting page HTML:", error);
+    sendResponse({
+      success: false,
+      error: error.message || "Failed to get page content",
+    });
+  }
 }
 
 // Handle data extraction request
 async function handleExtractData(request, sender, sendResponse) {
-    try {
-        const settings = await getSettings();
-        const { url, html, instruction } = request.data;
+  try {
+    const settings = await getSettings();
+    const { url, html, instruction } = request.data;
 
-        // Make API request to backend
-        const response = await fetch(`${settings.apiBaseUrl}/ingest`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ url, html, instruction })
-        });
+    // Make API request to backend
+    const response = await authorizedFetch(`${settings.apiBaseUrl}/ingest`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ url, html, instruction }),
+    });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `Server error: ${response.status}`);
-        }
-
-        const result = await response.json();
-        
-        // Store result in local storage for history
-        await storeExtractionResult(result);
-        
-        sendResponse({ success: true, data: result });
-    } catch (error) {
-        logger.error('Error extracting data:', error);
-        sendResponse({ 
-            success: false, 
-            error: error.message || 'Failed to extract data' 
-        });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Server error: ${response.status}`);
     }
+
+    const result = await response.json();
+
+    // Store result in local storage for history
+    await storeExtractionResult(result);
+
+    sendResponse({ success: true, data: result });
+  } catch (error) {
+    logger.error("Error extracting data:", error);
+    sendResponse({
+      success: false,
+      error: error.message || "Failed to extract data",
+    });
+  }
 }
 
 // Handle getting settings
 async function handleGetSettings(request, sender, sendResponse) {
-    try {
-        const settings = await getSettings();
-        sendResponse({ success: true, data: settings });
-    } catch (error) {
-        logger.error('Error getting settings:', error);
-        sendResponse({ 
-            success: false, 
-            error: error.message || 'Failed to get settings' 
-        });
-    }
+  try {
+    const settings = await getSettings();
+    sendResponse({ success: true, data: settings });
+  } catch (error) {
+    logger.error("Error getting settings:", error);
+    sendResponse({
+      success: false,
+      error: error.message || "Failed to get settings",
+    });
+  }
 }
 
 // Helper function to get settings from storage
 async function getSettings() {
-    return new Promise((resolve) => {
-        chrome.storage.local.get([
-            'apiBaseUrl',
-            'maxRetries',
-            'timeout'
-        ], (result) => {
-            resolve({
-                apiBaseUrl: result.apiBaseUrl || 'http://localhost:3000/api',
-                maxRetries: result.maxRetries || 3,
-                timeout: result.timeout || 30000
-            });
+  return new Promise((resolve) => {
+    chrome.storage.local.get(
+      ["apiBaseUrl", "maxRetries", "timeout"],
+      (result) => {
+        resolve({
+          apiBaseUrl: result.apiBaseUrl || "http://localhost:3000/api",
+          maxRetries: result.maxRetries || 3,
+          timeout: result.timeout || 30000,
         });
+      }
+    );
+  });
+}
+
+// ---- Shared auth helpers ----
+async function getAccessToken() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(["accessToken"], (result) => {
+      resolve(result.accessToken || null);
     });
+  });
+}
+
+async function setAccessToken(token) {
+  return new Promise((resolve) => {
+    chrome.storage.local.set({ accessToken: token || null }, resolve);
+  });
+}
+
+function baseUrlFromApi(apiUrl) {
+  try {
+    return apiUrl.replace(/\/api\/?$/, "");
+  } catch {
+    return apiUrl;
+  }
+}
+
+async function tryRefreshAccessToken(apiBaseUrl) {
+  const url = baseUrlFromApi(apiBaseUrl) + "/auth/refresh";
+  try {
+    const res = await fetch(url, { method: "POST", credentials: "include" });
+    if (!res.ok) return null;
+    const data = await res.json();
+    await setAccessToken(data.accessToken || null);
+    return data.accessToken || null;
+  } catch {
+    return null;
+  }
+}
+
+async function authorizedFetch(url, options = {}) {
+  const headers = new Headers(options.headers || {});
+  const token = await getAccessToken();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+
+  let res = await fetch(url, { ...options, headers });
+  if (res.status === 401) {
+    // Attempt refresh and retry once
+    const apiBase = url.includes("/api") ? url.split("/api")[0] + "/api" : url;
+    const refreshed = await tryRefreshAccessToken(apiBase);
+    if (refreshed) {
+      const retryHeaders = new Headers(options.headers || {});
+      retryHeaders.set("Authorization", `Bearer ${refreshed}`);
+      res = await fetch(url, { ...options, headers: retryHeaders });
+    }
+  }
+  return res;
 }
 
 // Helper function to store extraction results for history
 async function storeExtractionResult(result) {
-    try {
-        // Get existing history
-        const { extractionHistory = [] } = await new Promise((resolve) => {
-            chrome.storage.local.get(['extractionHistory'], resolve);
-        });
+  try {
+    // Get existing history
+    const { extractionHistory = [] } = await new Promise((resolve) => {
+      chrome.storage.local.get(["extractionHistory"], resolve);
+    });
 
-        // Add new result with timestamp
-        const historyItem = {
-            ...result,
-            timestamp: Date.now(),
-            id: result.record_id
-        };
+    // Add new result with timestamp
+    const historyItem = {
+      ...result,
+      timestamp: Date.now(),
+      id: result.record_id,
+    };
 
-        // Keep only last 50 results
-        const updatedHistory = [historyItem, ...extractionHistory].slice(0, 50);
+    // Keep only last 50 results
+    const updatedHistory = [historyItem, ...extractionHistory].slice(0, 50);
 
-        // Save back to storage
-        await new Promise((resolve) => {
-            chrome.storage.local.set({ extractionHistory: updatedHistory }, resolve);
-        });
+    // Save back to storage
+    await new Promise((resolve) => {
+      chrome.storage.local.set({ extractionHistory: updatedHistory }, resolve);
+    });
 
-        logger.info('Extraction result stored in history');
-    } catch (error) {
-        logger.error('Error storing extraction result:', error);
-    }
+    logger.info("Extraction result stored in history");
+  } catch (error) {
+    logger.error("Error storing extraction result:", error);
+  }
 }
 
 // Handle tab updates to refresh content if needed
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'complete' && tab.url) {
-        // Could be used to auto-refresh content or show notifications
-        logger.debug('Tab updated:', tab.url);
-    }
+  if (changeInfo.status === "complete" && tab.url) {
+    // Could be used to auto-refresh content or show notifications
+    logger.debug("Tab updated:", tab.url);
+  }
 });
 
 // Handle extension action click (optional - popup is default)
 chrome.action.onClicked.addListener((tab) => {
-    logger.info('Extension action clicked for tab:', tab.url);
-    // This won't fire if popup is set, but keeping for future use
+  logger.info("Extension action clicked for tab:", tab.url);
+  // This won't fire if popup is set, but keeping for future use
 });
 
 // Cleanup on extension shutdown
 chrome.runtime.onSuspend.addListener(() => {
-    logger.info('Extractly extension suspending...');
+  logger.info("Extractly extension suspending...");
 });
 
-logger.info('Extractly background service worker loaded');
+logger.info("Extractly background service worker loaded");
