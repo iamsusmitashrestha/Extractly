@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { asyncHandler, createError } from '../middleware/errorHandler';
+import { asyncHandler } from '../middleware/errorHandler';
+import { ValidationError, NotFoundError, InternalServerError } from '../errrors/AppError';
 import { databaseService } from '../services/databaseService';
 import { geminiService } from '../services/geminiService';
 import { validateIngestRequest } from '../utils/validation';
@@ -29,7 +30,7 @@ router.post('/ingest', asyncHandler(async (req: Request, res: Response) => {
   // Validate request
   const validation = validateIngestRequest({ url, html, instruction });
   if (!validation.isValid) {
-    throw createError(`Validation failed: ${validation.errors.join(', ')}`, 400);
+    throw new ValidationError(`Validation failed: ${validation.errors.join(', ')}`);
   }
 
   logger.info(`Processing extraction request for: ${url}`);
@@ -84,7 +85,7 @@ router.post('/ingest', asyncHandler(async (req: Request, res: Response) => {
       errorMessage: error instanceof Error ? error.message : 'Unknown error'
     });
 
-    throw createError('Failed to process extraction request', 500);
+    throw new InternalServerError('Failed to process extraction request');
   }
 }));
 
@@ -94,7 +95,7 @@ router.get('/records/:id', asyncHandler(async (req: Request, res: Response) => {
 
   const record = await databaseService.getExtractionRecord(id);
   if (!record) {
-    throw createError('Record not found', 404);
+    throw new NotFoundError('Record not found');
   }
 
   res.json(record);
@@ -105,7 +106,7 @@ router.get('/records', asyncHandler(async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
   const skip = (page - 1) * limit;
-  
+
   // Search and filter parameters
   const search = req.query.search as string;
   const status = req.query.status as string;
