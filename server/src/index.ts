@@ -79,7 +79,7 @@ app.use(requestLogger);
 // Mount routes
 app.use("/auth", authRouter);
 app.use("/auth/oauth", oauthRouter);
-app.use("/api/ingest", ingestRouter);
+app.use("/api", ingestRouter);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

@@ -18,7 +18,7 @@ export class GeminiService {
     }
 
     this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-pro', generationConfig: { temperature: 0.4, topK: 60, topP: 0.9 } });
+    this.model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest', generationConfig: { temperature: 0.4, topK: 60, topP: 0.9 } });
   }
 
   async extractData(html: string, instruction: string): Promise<ExtractionResult> {
@@ -27,7 +27,6 @@ export class GeminiService {
 
       const prompt = this.buildExtractionPrompt(html, instruction);
 
-      console.log("--------------------------------------------", prompt);
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -36,7 +35,7 @@ export class GeminiService {
 
       // Parse the JSON response
       const extractionResult = this.parseGeminiResponse(text);
-      
+
       return extractionResult;
     } catch (error) {
       logger.error('Gemini API error:', error);
@@ -46,12 +45,10 @@ export class GeminiService {
 
   private buildExtractionPrompt(html: string, instruction: string): string {
 
-    
+
     // Clean and preprocess HTML to focus on main content
     const processedHtml = this.preprocessHtml(html);
 
-    console.log("--------------------------------------------", processedHtml);
-    
     return `
 You are an expert web data extraction AI. Your task is to analyze HTML content and extract specific information based on natural language instructions.
 
@@ -105,27 +102,27 @@ Extract the requested data now:`;
     // Remove script and style tags that don't contain useful data
     processed = processed.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
     processed = processed.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
-    
+
     // Remove comments
     processed = processed.replace(/<!--[\s\S]*?-->/g, '');
-    
+
     // Remove common noise elements that rarely contain useful data
     processed = processed.replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, '');
-    
+
     // Clean up excessive whitespace while preserving structure
     processed = processed.replace(/\s+/g, ' ');
     processed = processed.replace(/>\s+</g, '><');
-    
+
     return processed.trim();
   }
 
   private parseGeminiResponse(response: string): ExtractionResult {
     logger.debug('Parsing Gemini response...');
-    
+
     try {
       // First attempt: direct JSON parsing
       const parsed = JSON.parse(response);
-      
+
       // Validate the structure
       if (!parsed.parsed_fields || !parsed.extracted || !parsed.confidence) {
         throw new Error('Invalid response structure from Gemini');
@@ -133,10 +130,10 @@ Extract the requested data now:`;
 
       logger.debug('Successfully parsed Gemini response');
       return this.validateExtractionResult(parsed);
-      
+
     } catch (error) {
       logger.error('Failed to parse Gemini response:', error);
-      
+
       // Fallback: try to extract JSON from response
       return this.fallbackParsing(response);
     }
@@ -145,13 +142,13 @@ Extract the requested data now:`;
   private fallbackParsing(response: string): ExtractionResult {
     try {
       logger.warn('Using fallback parsing...');
-      
+
       // Clean the response - remove any markdown formatting or extra text
       let cleanResponse = response.trim();
-      
+
       // Remove markdown code blocks if present
       cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      
+
       // Find JSON object in the response
       const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
@@ -168,10 +165,10 @@ Extract the requested data now:`;
       }
 
       return this.validateExtractionResult(parsed);
-      
+
     } catch (error) {
       logger.error('Fallback parsing also failed:', error);
-      
+
       // Return fallback result
       return {
         parsed_fields: ['error'],
@@ -183,7 +180,7 @@ Extract the requested data now:`;
 
   private validateExtractionResult(parsed: any): ExtractionResult {
     logger.debug('Validating extraction result...');
-    
+
     // Ensure arrays and objects are properly formatted
     const result: ExtractionResult = {
       parsed_fields: Array.isArray(parsed.parsed_fields) ? parsed.parsed_fields : [],
