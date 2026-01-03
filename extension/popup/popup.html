@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Extractly - Extract Data</title>
     <link rel="stylesheet" href="popup.css">
 </head>
+
 <body>
     <div class="container">
         <!-- Header -->
@@ -27,21 +29,28 @@
             <label for="instructionInput" class="input-label">
                 What data would you like to extract?
             </label>
-            <textarea 
-                id="instructionInput" 
-                class="instruction-input" 
-                placeholder="e.g., Get the title, price, and rating from this product page"
-                rows="3"
-            ></textarea>
-            
+            <textarea id="instructionInput" class="instruction-input"
+                placeholder="e.g., Get the title, price, and rating from this product page" rows="3"></textarea>
+
             <!-- Example suggestions -->
             <div class="suggestions">
                 <div class="suggestions-label">Quick examples:</div>
                 <div class="suggestion-buttons">
-                    <button class="suggestion-btn" data-text="Get the title, price, and description">Product Info</button>
+                    <button class="suggestion-btn" data-text="Get the title, price, and description">Product
+                        Info</button>
                     <button class="suggestion-btn" data-text="Extract all contact information">Contact Details</button>
                     <button class="suggestion-btn" data-text="Get description">Description</button>
                 </div>
+            </div>
+
+            <!-- Provider Selection -->
+            <div class="provider-section" style="margin-top: 15px;">
+                <label for="providerSelect" class="input-label">Select AI Provider:</label>
+                <select id="providerSelect" class="provider-select"
+                    style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ddd; background-color: #f8f9fa;">
+                    <option value="gemini">Google Gemini</option>
+                    <option value="openai">OpenAI GPT</option>
+                </select>
             </div>
         </div>
 
@@ -84,4 +93,5 @@
 
     <script src="popup.js"></script>
 </body>
+
 </html>

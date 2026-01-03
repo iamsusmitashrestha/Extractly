@@ -13,7 +13,7 @@ class ExtractlyPopup {
         this.apiBaseUrl = 'http://localhost:3000/api';
         this.currentTab = null;
         this.isProcessing = false;
-        
+
         this.initializeElements();
         this.attachEventListeners();
         this.loadCurrentTab();
@@ -33,7 +33,8 @@ class ExtractlyPopup {
             errorContent: document.getElementById('errorContent'),
             statusText: document.getElementById('statusText'),
             copyResultsBtn: document.getElementById('copyResultsBtn'),
-            suggestionBtns: document.querySelectorAll('.suggestion-btn')
+            suggestionBtns: document.querySelectorAll('.suggestion-btn'),
+            providerSelect: document.getElementById('providerSelect')
         };
     }
 
@@ -66,7 +67,7 @@ class ExtractlyPopup {
             e.preventDefault();
             this.openWebDashboard();
         });
-                                                                    
+
         document.getElementById('helpLink').addEventListener('click', (e) => {
             e.preventDefault();
             this.showStatus('Help: Enter natural language instructions to extract data from the current page.');
@@ -78,7 +79,7 @@ class ExtractlyPopup {
             // Get current active tab
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
             this.currentTab = tab;
-            
+
             // Display current URL
             if (tab && tab.url) {
                 this.elements.currentUrl.textContent = this.truncateUrl(tab.url);
@@ -98,7 +99,8 @@ class ExtractlyPopup {
         if (this.isProcessing) return;
 
         const instruction = this.elements.instructionInput.value.trim();
-        
+        const aiProvider = this.elements.providerSelect.value;
+
         // Validation
         if (!instruction) {
             this.showError('Please enter an instruction for data extraction');
@@ -111,7 +113,7 @@ class ExtractlyPopup {
         }
 
         // Check if URL is accessible
-        if (this.currentTab.url.startsWith('chrome://') || 
+        if (this.currentTab.url.startsWith('chrome://') ||
             this.currentTab.url.startsWith('chrome-extension://') ||
             this.currentTab.url.startsWith('edge://') ||
             this.currentTab.url.startsWith('about:')) {
@@ -127,7 +129,7 @@ class ExtractlyPopup {
 
             // Get HTML content from the current tab
             const htmlContent = await this.getPageHTML();
-            
+
             if (!htmlContent) {
                 throw new Error('Unable to capture page content');
             }
@@ -138,7 +140,8 @@ class ExtractlyPopup {
             const result = await this.sendToBackend({
                 url: this.currentTab.url,
                 html: htmlContent,
-                instruction: instruction
+                instruction: instruction,
+                aiProvider: aiProvider
             });
 
             // Display results
@@ -198,14 +201,14 @@ class ExtractlyPopup {
 
     displayResults(result) {
         const { parsed_fields, extracted, confidence } = result;
-        
+
         let html = '';
-        
+
         parsed_fields.forEach(field => {
             const value = extracted[field];
             const conf = confidence[field];
             const confidencePercent = Math.round(conf * 100);
-            
+
             html += `
                 <div class="result-item">
                     <div class="result-field">${this.escapeHtml(field)}</div>
@@ -217,7 +220,7 @@ class ExtractlyPopup {
 
         this.elements.resultsContent.innerHTML = html;
         this.elements.resultsSection.style.display = 'block';
-        
+
         // Store results for copying
         this.lastResults = result;
     }
@@ -226,18 +229,18 @@ class ExtractlyPopup {
         if (!this.lastResults) return;
 
         const { parsed_fields, extracted, confidence } = this.lastResults;
-        
+
         let text = 'Extractly Extraction Results\n';
-        text += '=' .repeat(30) + '\n\n';
-        
+        text += '='.repeat(30) + '\n\n';
+
         parsed_fields.forEach(field => {
             const value = extracted[field];
             const conf = confidence[field];
             const confidencePercent = Math.round(conf * 100);
-            
+
             text += `${field}: ${value || 'Not found'} (${confidencePercent}% confidence)\n`;
         });
-        
+
         text += `\nExtracted from: ${this.currentTab.url}\n`;
         text += `Timestamp: ${new Date().toLocaleString()}\n`;
 
@@ -251,7 +254,7 @@ class ExtractlyPopup {
     setProcessingState(processing) {
         this.isProcessing = processing;
         this.elements.extractBtn.disabled = processing;
-        
+
         if (processing) {
             this.elements.btnText.style.display = 'none';
             this.elements.btnLoader.style.display = 'inline';
