@@ -2,7 +2,8 @@ import { Router, Request, Response } from 'express';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ValidationError, NotFoundError, InternalServerError } from '../errrors/AppError';
 import { databaseService } from '../services/databaseService';
-import { geminiService } from '../services/geminiService';
+import { ProviderFactory } from '../services/providers/ProviderFactory';
+import { ProviderName } from '../services/providers/IExtractionProvider';
 import { validateIngestRequest } from '../utils/validation';
 import logger from '../utils/logger';
 
@@ -12,6 +13,7 @@ interface IngestRequest {
   url: string;
   html: string;
   instruction: string;
+  aiProvider?: ProviderName;
 }
 
 interface IngestResponse {
@@ -25,7 +27,7 @@ interface IngestResponse {
 
 // POST /api/ingest - Main endpoint for processing extraction requests
 router.post('/ingest', asyncHandler(async (req: Request, res: Response) => {
-  const { url, html, instruction }: IngestRequest = req.body;
+  const { url, html, instruction, aiProvider }: IngestRequest = req.body;
 
   // Validate request
   const validation = validateIngestRequest({ url, html, instruction });
@@ -35,6 +37,9 @@ router.post('/ingest', asyncHandler(async (req: Request, res: Response) => {
 
   logger.info(`Processing extraction request for: ${url}`);
   logger.info(`Instruction: ${instruction}`);
+  if (aiProvider) {
+    logger.info(`Requested AI Provider: ${aiProvider}`);
+  }
 
   // Create initial database record
   const record = await databaseService.createExtractionRecord({
@@ -51,8 +56,9 @@ router.post('/ingest', asyncHandler(async (req: Request, res: Response) => {
       processingStatus: 'processing'
     });
 
-    // Process with Gemini
-    const extractionResult = await geminiService.extractData(html, instruction);
+    // Process with AI provider (Gemini, OpenAI, etc.)
+    const provider = ProviderFactory.getProvider(aiProvider);
+    const extractionResult = await provider.extractData(html, instruction);
 
     // Update record with results
     await databaseService.updateExtractionRecord(record.id, {
