@@ -5,12 +5,14 @@ A powerful Chrome Extension that uses AI to extract structured data from web pag
 ## Features
 
 - **Natural Language Processing**: Describe what data you want in plain English
-- **AI-Powered Extraction**: Uses Google Gemini to understand and extract data
+- **Multiple AI Providers**: Support for Google Gemini and OpenAI GPT models
+- **Flexible Configuration**: Switch between providers without code changes
 - **Structured Results**: Get clean, structured data with confidence scores
 - **Database Storage**: All extractions are saved with unique record IDs
 - **Chrome Extension**: Beautiful, responsive popup interface
 - **Web Dashboard**: Browse and search saved extraction records
 - **Type-Safe Backend**: Built with TypeScript and Prisma ORM
+- **Extensible Architecture**: Easy to add new AI providers
 
 ## Architecture
 
@@ -18,13 +20,17 @@ A powerful Chrome Extension that uses AI to extract structured data from web pag
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │  Chrome         │    │  Node.js        │    │  PostgreSQL     │
 │  Extension      │───▶│  Backend        │───▶│  Database       │
-│  (Manifest v3)  │    │  + Gemini AI    │    │  + Prisma ORM   │
+│  (Manifest v3)  │    │  + Multi-AI     │    │  + Prisma ORM   │
 └─────────────────┘    │  + Web UI       │    └─────────────────┘
                        └─────────────────┘
 ┌─────────────────┐              │
 │  Web Dashboard  │──────────────┘
 │  (Browse/Search)│
 └─────────────────┘
+
+Supported AI Providers:
+- Google Gemini (gemini-flash-latest, gemini-1.5-pro)
+- OpenAI (gpt-4o-mini, gpt-4o, gpt-4-turbo)
 ```
 
 ## Quick Start
@@ -34,7 +40,7 @@ A powerful Chrome Extension that uses AI to extract structured data from web pag
 - Node.js 18+ 
 - Docker (for PostgreSQL)
 - Chrome Browser
-- Gemini API Key
+- AI Provider API Key (Gemini or OpenAI)
 
 ### 1. Database Setup
 
@@ -57,7 +63,9 @@ npm install
 
 # Set up environment variables
 cp .env.example .env
-# Edit .env and add your GEMINI_API_KEY
+# Edit .env and configure your AI provider:
+# - Set AI_PROVIDER to 'gemini' or 'openai'
+# - Add your provider's API key (GEMINI_API_KEY or OPENAI_API_KEY)
 
 # Initialize Prisma and run migrations
 npx prisma migrate dev --name init
@@ -94,6 +102,35 @@ The backend will be running at `http://localhost:3000`
 3. Search by URL, instruction, or extracted data
 4. Filter by processing status
 5. Click on any record to view detailed information
+
+## AI Provider Configuration
+
+Extractly supports multiple AI providers. Choose the one that best fits your needs:
+
+### Google Gemini (Default)
+- Fast and cost-effective
+- Generous free tier (60 requests/minute)
+- Excellent extraction accuracy
+- Get API key: https://makersuite.google.com/app/apikey
+
+```env
+AI_PROVIDER=gemini
+GEMINI_API_KEY=your_key_here
+```
+
+### OpenAI
+- Powerful GPT models
+- Structured output support
+- Enterprise-grade reliability
+- Get API key: https://platform.openai.com/api-keys
+
+```env
+AI_PROVIDER=openai
+OPENAI_API_KEY=your_key_here
+OPENAI_MODEL=gpt-4o-mini
+```
+
+For detailed provider comparison, setup instructions, and cost optimization tips, see [PROVIDER_GUIDE.md](./PROVIDER_GUIDE.md).
 
 ## Project Structure
 
@@ -220,14 +257,25 @@ npx prisma studio
 
 ## Environment Variables
 
-Create a `.env` file in the backend directory:
+Create a `.env` file in the server directory using `.env.example` as a template:
 
 ```env
 # Database
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/Extractly?schema=public"
 
-# Gemini AI
+# AI Provider Selection (gemini or openai)
+AI_PROVIDER=gemini
+
+# Google Gemini Configuration (if using Gemini)
 GEMINI_API_KEY="your_gemini_api_key_here"
+GEMINI_MODEL=gemini-flash-latest
+GEMINI_TEMPERATURE=0.4
+
+# OpenAI Configuration (if using OpenAI)
+OPENAI_API_KEY="your_openai_api_key_here"
+OPENAI_MODEL=gpt-4o-mini
+OPENAI_TEMPERATURE=0.4
+OPENAI_MAX_TOKENS=2000
 
 # Server
 PORT=3000
