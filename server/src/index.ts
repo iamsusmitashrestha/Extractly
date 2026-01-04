@@ -1,3 +1,4 @@
+import "express-async-errors";
 // Load environment variables FIRST before any other imports
 import dotenv from "dotenv";
 dotenv.config();
@@ -110,12 +111,10 @@ app.get("/health", async (req, res) => {
 });
 
 // 404 handler
+import { NotFoundError } from "./errrors/AppError";
+
 app.use("*", (req, res) => {
-  res.status(404).json({
-    error: "Endpoint not found",
-    path: req.originalUrl,
-    method: req.method,
-  });
+  throw new NotFoundError(`Endpoint not found: ${req.method} ${req.originalUrl}`);
 });
 
 // Global error handler

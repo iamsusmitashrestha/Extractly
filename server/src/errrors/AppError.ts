@@ -41,3 +41,21 @@ export class NotFoundError extends AppError {
     super(message, 404);
   }
 }
+
+export class BadGatewayError extends AppError {
+  constructor(message: string) {
+    super(message, 502);
+  }
+}
+
+export class TooManyRequestsError extends AppError {
+  constructor(message: string) {
+    super(message, 429);
+  }
+}
+
+export class UnauthorizedError extends AppError {
+  constructor(message: string = "Unauthorized access") {
+    super(message, 401);
+  }
+}
