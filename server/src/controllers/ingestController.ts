@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { asyncHandler } from '../middleware/errorHandler';
-import { ValidationError, NotFoundError, InternalServerError } from '../errrors/AppError';
+
+import { ValidationError, NotFoundError } from '../errrors/AppError';
 import { databaseService } from '../services/databaseService';
-import { geminiService } from '../services/geminiService';
+import { ProviderFactory } from '../services/providers/ProviderFactory';
+import { ProviderName } from '../services/providers/IExtractionProvider';
 import { validateIngestRequest } from '../utils/validation';
 import logger from '../utils/logger';
 
@@ -12,6 +13,7 @@ interface IngestRequest {
   url: string;
   html: string;
   instruction: string;
+  aiProvider?: ProviderName;
 }
 
 interface IngestResponse {
@@ -24,8 +26,8 @@ interface IngestResponse {
 }
 
 // POST /api/ingest - Main endpoint for processing extraction requests
-router.post('/ingest', asyncHandler(async (req: Request, res: Response) => {
-  const { url, html, instruction }: IngestRequest = req.body;
+router.post('/ingest', async (req: Request, res: Response) => {
+  const { url, html, instruction, aiProvider }: IngestRequest = req.body;
 
   // Validate request
   const validation = validateIngestRequest({ url, html, instruction });
@@ -35,6 +37,9 @@ router.post('/ingest', asyncHandler(async (req: Request, res: Response) => {
 
   logger.info(`Processing extraction request for: ${url}`);
   logger.info(`Instruction: ${instruction}`);
+  if (aiProvider) {
+    logger.info(`Requested AI Provider: ${aiProvider}`);
+  }
 
   // Create initial database record
   const record = await databaseService.createExtractionRecord({
@@ -51,8 +56,9 @@ router.post('/ingest', asyncHandler(async (req: Request, res: Response) => {
       processingStatus: 'processing'
     });
 
-    // Process with Gemini
-    const extractionResult = await geminiService.extractData(html, instruction);
+    // Process with AI provider (Gemini, OpenAI, etc.)
+    const provider = ProviderFactory.getProvider(aiProvider);
+    const extractionResult = await provider.extractData(html, instruction);
 
     // Update record with results
     await databaseService.updateExtractionRecord(record.id, {
@@ -76,8 +82,8 @@ router.post('/ingest', asyncHandler(async (req: Request, res: Response) => {
 
     res.json(response);
 
-  } catch (error) {
-    logger.error(`Processing failed for record ${record.id}:`, error);
+  } catch (error: any) {
+    logger.error(`Processing failed for record ${record.id}:`, error.message);
 
     // Update record with error
     await databaseService.updateExtractionRecord(record.id, {
@@ -85,24 +91,22 @@ router.post('/ingest', asyncHandler(async (req: Request, res: Response) => {
       errorMessage: error instanceof Error ? error.message : 'Unknown error'
     });
 
-    throw new InternalServerError('Failed to process extraction request');
+    // Re-throw the original error to be handled by the global error handler
+    throw error;
   }
-}));
+});
 
 // GET /api/records/:id - Get extraction record by ID
-router.get('/records/:id', asyncHandler(async (req: Request, res: Response) => {
+router.get('/records/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const record = await databaseService.getExtractionRecord(id);
-  if (!record) {
-    throw new NotFoundError('Record not found');
-  }
+  const record = await databaseService.getExtractionRecordOrThrow(id);
 
   res.json(record);
-}));
+});
 
 // GET /api/records - Get all extraction records (with pagination and search)
-router.get('/records', asyncHandler(async (req: Request, res: Response) => {
+router.get('/records', async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
   const skip = (page - 1) * limit;
@@ -129,6 +133,6 @@ router.get('/records', asyncHandler(async (req: Request, res: Response) => {
       pages: Math.ceil(total / limit)
     }
   });
-}));
+});
 
 export { router as ingestRouter };

@@ -1,6 +1,7 @@
 import { prisma } from '../config/database';
 import logger from '../utils/logger';
 import { ExtractionRecord } from '@prisma/client';
+import { NotFoundError } from '../errrors/AppError';
 
 export class DatabaseService {
   async createExtractionRecord(data: {
@@ -40,8 +41,20 @@ export class DatabaseService {
     });
   }
 
+  /**
+   * Retrieves a record by ID or throws NotFoundError if it doesn't exist.
+   * Preferred method for controllers to avoid repetitive null checks.
+   */
+  async getExtractionRecordOrThrow(id: string): Promise<ExtractionRecord> {
+    const record = await this.getExtractionRecord(id);
+    if (!record) {
+      throw new NotFoundError(`Extraction record not found with ID: ${id}`);
+    }
+    return record;
+  }
+
   async getExtractionRecords(
-    skip: number = 0, 
+    skip: number = 0,
     take: number = 10,
     filters?: {
       search?: string;
@@ -51,12 +64,12 @@ export class DatabaseService {
     }
   ): Promise<{ records: ExtractionRecord[]; total: number }> {
     const where: any = {};
-    
+
     // Apply status filter
     if (filters?.status) {
       where.processingStatus = filters.status;
     }
-    
+
     // Apply search filter
     if (filters?.search) {
       where.OR = [
@@ -65,13 +78,13 @@ export class DatabaseService {
         { errorMessage: { contains: filters.search, mode: 'insensitive' } }
       ];
     }
-    
+
     // Determine sort order
     const orderBy: any = {};
     const sortField = filters?.sortBy || 'createdAt';
     const sortDirection = filters?.sortOrder === 'asc' ? 'asc' : 'desc';
     orderBy[sortField] = sortDirection;
-    
+
     // Execute queries in parallel
     const [records, total] = await Promise.all([
       prisma.extractionRecord.findMany({
@@ -82,7 +95,7 @@ export class DatabaseService {
       }),
       prisma.extractionRecord.count({ where })
     ]);
-    
+
     return { records, total };
   }
 

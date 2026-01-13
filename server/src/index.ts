@@ -1,3 +1,4 @@
+import "express-async-errors";
 // Load environment variables FIRST before any other imports
 import dotenv from "dotenv";
 dotenv.config();
@@ -14,6 +15,7 @@ import { ingestRouter } from "./controllers/ingestController";
 import authRouter from "./routes/authRoutes";
 import logger from "./utils/logger";
 import oauthRouter from "./routes/oauthRoutes";
+import { ProviderFactory } from "./services/providers/ProviderFactory";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -82,21 +84,37 @@ app.use("/auth/oauth", oauthRouter);
 app.use("/api", ingestRouter);
 
 // Health check endpoint
-app.get("/health", (req, res) => {
-  res.json({
-    status: "ok",
-    timestamp: new Date().toISOString(),
-    service: "Extractly-backend",
-  });
+app.get("/health", async (req, res) => {
+  try {
+    const providerInfo = ProviderFactory.getProviderInfo();
+    const provider = ProviderFactory.getProvider();
+    const providerHealthy = await provider.healthCheck();
+
+    res.json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      service: "Extractly-backend",
+      aiProvider: {
+        name: providerInfo.name,
+        type: providerInfo.type,
+        healthy: providerHealthy
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      timestamp: new Date().toISOString(),
+      service: "Extractly-backend",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
 });
 
 // 404 handler
+import { NotFoundError } from "./errrors/AppError";
+
 app.use("*", (req, res) => {
-  res.status(404).json({
-    error: "Endpoint not found",
-    path: req.originalUrl,
-    method: req.method,
-  });
+  throw new NotFoundError(`Endpoint not found: ${req.method} ${req.originalUrl}`);
 });
 
 // Global error handler
